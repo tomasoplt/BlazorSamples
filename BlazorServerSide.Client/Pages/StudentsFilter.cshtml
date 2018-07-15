@@ -1,0 +1,254 @@
+﻿@using BlazorServerSide.Shared;
+@using BlazorServerSide.Shared.Models;
+@using Microsoft.AspNetCore.Blazor.Browser.Interop
+
+@inject HttpClient Http
+
+@page "/StudentsFilter"
+
+
+<table width="100%" style="background:#0A2464;color:honeydew">
+    <tr>
+        <td width="20"></td>
+        <td>
+            <h2>ASP.NET Core Blazor - Filtering and Sorting usign EF and Web API</h2>
+        </td>
+
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+</table>
+<hr />
+@if (stdMaster == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <table style="background-color:#FFFFFF; border-style:inset;border-width:1px;border-color:#6D7B8D; padding:2px;width:100%;table-layout:fixed;" cellpadding="1" cellspacing="1">
+        <tr style="background-color:#2d364d ; color:#FFFFFF ;border-style:dashed;border-width:2px;border-color:0A2464;">
+            <td width="30" align="center"></td>
+            <td width="80" align="center">
+                <img src="@ImageSortname" onclick="@(async () => await StudentSorting("StdId"))" height="24" width="24" />
+                Student ID
+
+            </td>
+            <td width="240" align="center">
+                <img src="@ImageSortname" onclick="@(async () => await StudentSorting("StdName"))" height="24" width="24" />
+                Student Name
+            </td>
+            <td width="240" align="center">
+                <img src="@ImageSortname" onclick="@(async () => await StudentSorting("Email"))" height="24" width="24" />
+                Email
+            </td>
+            <td width="120" align="center">
+                <img src="@ImageSortname" onclick="@(async () => await StudentSorting("Phone"))" height="24" width="24" />
+                Phone
+            </td>
+            <td width="340" align="center">
+                <img src="@ImageSortname" onclick="@(async () => await StudentSorting("Address"))" height="24" width="24" />
+                Address
+            </td>
+        </tr>
+        <tr style="height: 30px; background-color:#336699 ; color:#FFFFFF ;">
+            <td width="30" align="center"></td>
+            <td width="80" align="center">Filter : </td>
+            <td width="240" align="center">
+                <input width="70" onchange=@OnstdNameChanged oninput="(this.dispatchEvent(new CustomEvent('change', {bubbles: true})))" />
+            </td>
+            <td width="240" align="center">
+                <input width="70" onchange=@OnEmailChanged oninput="(this.dispatchEvent(new CustomEvent('change', {bubbles: true})))" />
+            </td>
+            <td width="120" align="center">
+                <input width="70" onchange=@OnPhoneChanged oninput="(this.dispatchEvent(new CustomEvent('change', {bubbles: true})))" />
+            </td>
+            <td width="340" align="center">
+                <input width="70" onchange=@OnAddressChanged oninput="(this.dispatchEvent(new CustomEvent('change', {bubbles: true})))" />
+            </td>
+        </tr>
+        @foreach (var StudentMasters in stdMaster)
+        {
+            <tr style="border-style:dashed;border-width:2px;border-color:#659EC7;">
+                <td align="center" style="border: solid1px#659EC7; padding: 5px;table-layout:fixed;"></td>
+                <td align="center">
+
+                    <span style="color:#9F000F">
+                        @StudentMasters.StdId
+                    </span>
+                </td>
+                <td align="center">
+                    <span style="color:#9F000F">
+                        @StudentMasters.StdName
+                    </span>
+                </td>
+                <td align="center">
+                    <span style="color:#9F000F">
+                        @StudentMasters.Email
+                    </span>
+                </td>
+                <td align="center">
+                    <span style="color:#9F000F">
+                        @StudentMasters.Phone
+                    </span>
+                </td>
+                <td align="center">
+                    <span style="color:#9F000F">
+                        @StudentMasters.Address
+                    </span>
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+
+@functions {
+StudentMasters[] stdMaster;
+
+StudentMasters stdmst = new StudentMasters();
+
+int ids = 0;
+int studentIDs = 0;
+string ImageSortname = "Images/sortAsc.png";
+
+protected override async Task OnInitAsync()
+{
+    stdMaster = await Http.GetJsonAsync<StudentMasters[]>("/api/StudentMasters/");
+}
+
+// For Filtering by Student Name
+void OnstdNameChanged(UIChangeEventArgs args)
+{
+    string values = args.Value.ToString();
+    studentFilteringList(values, "StudentName");
+}
+
+
+// For Filtering by Email
+void OnEmailChanged(UIChangeEventArgs args)
+{
+    string values = args.Value.ToString();
+    studentFilteringList(values, "Email");
+}
+
+
+// For Filtering by Phone
+void OnPhoneChanged(UIChangeEventArgs args)
+{
+    string values = args.Value.ToString();
+    studentFilteringList(values, "Phone");
+}
+
+
+// For Filtering by Adress
+void OnAddressChanged(UIChangeEventArgs args)
+{
+    string values = args.Value.ToString();
+    studentFilteringList(values, "Address");
+}
+
+//Filtering
+protected async Task studentFilteringList(String Value, string columnName)
+{
+    stdMaster = await Http.GetJsonAsync<StudentMasters[]>("/api/StudentMasters/");
+
+    if (Value.Trim().Length > 0)
+    {
+        switch (columnName)
+        {
+            case "StudentName":
+                stdMaster = stdMaster.Where(x => x.StdName.Contains(Value)).ToArray();
+                break;
+
+            case "Email":
+                stdMaster = stdMaster.Where(x => x.Email.Contains(Value)).ToArray();
+                break;
+            case "Phone":
+                stdMaster = stdMaster.Where(x => x.Phone.Contains(Value)).ToArray();
+                break;
+            case "Address":
+                stdMaster = stdMaster.Where(x => x.Address.Contains(Value)).ToArray();
+                break;
+            default:
+                stdMaster = await Http.GetJsonAsync<StudentMasters[]>("/api/StudentMasters/");
+                break;
+        }
+    }
+    else
+    {
+        stdMaster = await Http.GetJsonAsync<StudentMasters[]>("/api/StudentMasters/");
+
+
+    }
+
+}
+
+
+//Sorting
+
+
+protected async Task StudentSorting(string SortColumn)
+{
+    stdMaster = await Http.GetJsonAsync<StudentMasters[]>("/api/StudentMasters/");
+
+
+    if (ids == 0)
+    {
+        ImageSortname = "Images/sortDec.png";
+        ids = 1;
+
+        switch (SortColumn)
+        {
+            case "StdId":
+                stdMaster = stdMaster.OrderBy(x => x.StdId).ToArray();
+                break;
+            case "StdName":
+                stdMaster = stdMaster.OrderBy(x => x.StdName).ToArray();
+                break;
+
+            case "Email":
+                stdMaster = stdMaster.OrderBy(x => x.Email).ToArray();
+                break;
+            case "Phone":
+                stdMaster = stdMaster.OrderBy(x => x.Phone).ToArray();
+                break;
+            case "Address":
+                stdMaster = stdMaster.OrderBy(x => x.Address).ToArray();
+                break;
+
+        }
+    }
+    else
+    {
+        ImageSortname = "Images/sortAsc.png";
+        ids = 0;
+
+        switch (SortColumn)
+        {
+            case "StdId":
+                stdMaster = stdMaster.OrderByDescending(x => x.StdId).ToArray();
+                break;
+            case "StdName":
+                stdMaster = stdMaster.OrderByDescending(x => x.StdName).ToArray();
+                break;
+
+            case "Email":
+                stdMaster = stdMaster.OrderByDescending(x => x.Email).ToArray();
+                break;
+            case "Phone":
+                stdMaster = stdMaster.OrderByDescending(x => x.Phone).ToArray();
+                break;
+            case "Address":
+                stdMaster = stdMaster.OrderByDescending(x => x.Address).ToArray();
+                break;
+        }
+    }
+
+
+
+}
+
+
+}
